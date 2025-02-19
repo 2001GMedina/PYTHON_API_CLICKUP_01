@@ -27,32 +27,30 @@ def normalize_columns(df):
                 df = pd.concat([df.drop(columns=[column]), array_df], axis=1)
     return df
 
-# Função para converter timestamps para datas e formatar como DD/MM/AAAA
+# Function to convert timestamps to dates and format them as DD/MM/YYYY
 def convert_and_format_dates(df, columns):
     for col in columns:
         if col in df.columns:
-            # Verifica se o valor é um número de timestamp e converte para datetime
+            # Checks if the value is a timestamp number and converts it to datetime.
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d/%m/%Y')
     return df
 
-# Função para renomear as colunas
 def rename_columns(df, column_mapping):
     df = df.rename(columns=column_mapping)
     return df
 
-# Função para adicionar a coluna MES_REF com base no dia atual
 def add_mes_ref_column():
     today = datetime.now()
     if today.day in [30, 31]:
         if today.month == 12:
-            return f'01/01/{today.year + 1}'  # Janeiro do próximo ano
+            return f'01/01/{today.year + 1}'
         else:
             next_month = today.month + 1
             return f'01/{next_month:02d}/{today.year}'
     else:
-        return f'01/{today.month:02d}/{today.year}'  # Retorna o mês atual
+        return f'01/{today.month:02d}/{today.year}' 
 
-# Função para calcular a data de início com base no dia atual
+# Function to calculate the start date based on the current day.
 def calculate_start_date():
     today = datetime.now()
     if today.day > 29:
@@ -64,19 +62,17 @@ def calculate_start_date():
             start_date = today.replace(month=today.month - 1, day=29).strftime('%Y-%m-%d')
     
     return start_date
-
-# Função para ajustar a coluna SLA e renomear para SLA_AJUSTADO
+O
 def adjust_sla_column(df):
     df['SLA_AJUSTADO'] = df['SLA'].apply(lambda x: ''.join(re.findall(r'\d+', str(x))))
     return df
 
-# Função para adicionar a coluna FILTRO com base na coluna SLA_AJUSTADO
 def add_filtro_column(df):
     df['DIA_UTEIS'] = df.apply(lambda row: count_business_days(row['DATA_CRIACAO'], row['DATA_FECHAMENTO']), axis=1)
     df['FILTRO'] = df['DIA_UTEIS'].apply(lambda x: 'OK' if x <= 2 else 'FORA')
     return df
 
-# Função para contar dias úteis
+# Function to count working days
 def count_business_days(creation_date, closing_date):
     brazil = holidays.Brazil()  # Feriados nacionais
     creation_date = pd.to_datetime(creation_date, format='%d/%m/%Y')
@@ -93,18 +89,17 @@ def count_business_days(creation_date, closing_date):
     return business_days
 
 #------------------------------------------------------------------------
-# Variáveis da API
+# API Variables
 token = os.getenv('CLICKUP_KEY')
 url = 'https://api.clickup.com/api/v2/view/12zuj6-6773/task'
 headers = { 'Authorization': token }
 #------------------------------------------------------------------------
 
-# Calcula a data de início e a data de ontem
 start_date = calculate_start_date()
 yesterday = datetime.now() - timedelta(1)
 end_date = yesterday.strftime('%Y-%m-%d')
 
-# Função para fazer a requisição e coletar todos os dados
+# API Request function
 def fetch_all_tasks(url, headers, start_date, end_date):
     all_tasks = []
     page = 0
@@ -123,16 +118,12 @@ def fetch_all_tasks(url, headers, start_date, end_date):
             break
     return all_tasks
 
-# Fazendo a requisição para coletar todos os dados
 tasks = fetch_all_tasks(url, headers, start_date, end_date)
 
-# Convertendo os dados para um DataFrame do pandas
+# Converting to a Pandas Data Frame
 df = pd.DataFrame(tasks)
-
-# Normalizando as colunas com JSONs ou arrays
 df = normalize_columns(df)
 
-# Selecionando apenas as colunas desejadas se existirem
 desired_columns = [
     'name', 
     'assignees_0_username', 
@@ -142,25 +133,23 @@ desired_columns = [
     'custom_fields_3_value'
 ]
 
-# Verifica quais colunas desejadas estão disponíveis
+# Checks which desired columns are available.
 available_columns = [col for col in desired_columns if col in df.columns]
 
-# Se 'assignees_0_username' não estiver disponível, adicione a coluna com valores nulos
+# If 'assignees_0_username' is not available, add the column with null values.
 if 'assignees_0_username' not in available_columns:
     print("Coluna 'assignees_0_username' não encontrada. Será adicionada com valores nulos.")
     df['assignees_0_username'] = np.nan  # Adiciona a coluna com valores nulos
 
-# Filtra o DataFrame usando as colunas disponíveis
 df_filtered = df[available_columns]
 
-# Assegura que df_filtered mantém a ordem desejada das colunas
+# Ensure that df_filtered maintains the desired column order.
 df_filtered = df_filtered.reindex(columns=desired_columns)
 
 
-# Converte os timestamps para datas e formata como DD/MM/AAAA
+# Convert the timestamps to dates and format them as DD/MM/YYYY.
 df_filtered = convert_and_format_dates(df_filtered, ['date_created', 'date_closed'])
 
-# Mapeamento dos novos nomes das colunas
 column_mapping = {
     'name': 'NOME_TAREFA',
     'assignees_0_username': 'RESPONSAVEL',
@@ -170,19 +159,14 @@ column_mapping = {
     'custom_fields_3_value': 'SLA'
 }
 
-# Renomeia as colunas
 df_filtered = rename_columns(df_filtered, column_mapping)
 
-# Adiciona a coluna MES_REF
 df_filtered['MES_REF'] = add_mes_ref_column()
 
-# Ajusta a coluna SLA para incluir apenas números e renomeia para SLA_AJUSTADO
 df_filtered = adjust_sla_column(df_filtered)
 
-# Adiciona a coluna FILTRO com base na coluna DIA_UTEIS
 df_filtered = add_filtro_column(df_filtered)
 
-# Reordena as colunas conforme a ordem desejada, incluindo a nova coluna
 final_columns = [
     'NOME_TAREFA', 
     'RESPONSAVEL', 
@@ -196,36 +180,35 @@ final_columns = [
 ]
 df_filtered = df_filtered[final_columns]
 
-# Processando o DataFrame e inserindo no banco de dados
+# Processing the DataFrame and inserting it into the database.
 try:
     with db_connection() as connection:
         with connection.cursor() as cursor:
             table = 'DADOS_OUVIDORIA'
             
-            # Obter a estrutura da tabela Oracle
+            # Get the structure of the Oracle table.
             cursor.execute(f"SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{table}'")
             columns = [row[0] for row in cursor.fetchall()]
             num_columns = len(columns)
             
-            # Verifica se o número de colunas na tabela Oracle corresponde ao número de colunas no DataFrame
+            # Check if the number of columns in the Oracle table matches the number of columns in the DataFrame.
             if len(df_filtered.columns) != num_columns:
                 print(f"Número de colunas no DataFrame ({len(df_filtered.columns)}) não corresponde ao número de colunas na tabela Oracle ({num_columns}).")
                 exit()
             
-            # Reordenar as colunas do DataFrame para corresponder à ordem da tabela Oracle
             df_filtered = df_filtered[columns]
             
-            # Converter os tipos de dados, se necessário
+            # Convert the data types if necessary.
             for col in columns:
                 if 'DATA' in col.upper():
                     continue
                 elif 'NUM' in col.upper():
                     df_filtered[col] = pd.to_numeric(df_filtered[col], errors='coerce')
 
-            # Comando para deletar dados do banco
+            # Command to delete data from the database.
             delete_command = f"DELETE FROM {table} WHERE MES_REF = '{df_filtered['MES_REF'][0]}'"  # Usando o primeiro valor de MES_REF
             
-            # Deletar dados do banco
+            # Execute delete
             try:
                 cursor.execute(delete_command)
                 print("Dados deletados com sucesso!")
@@ -233,7 +216,7 @@ try:
                 print(f"Erro ao deletar dados: {e}")
                 exit()
 
-            # Criar a query de inserção
+            # Create insert query
             placeholders = ', '.join(['?' for _ in range(num_columns)])
             insert_command = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
             
