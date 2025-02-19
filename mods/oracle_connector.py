@@ -2,15 +2,14 @@ from dotenv import load_dotenv
 import pyodbc
 import os
 
-# carregar variáveis de ambiente
 load_dotenv()
 
-# Variáveis para acessar banco de dados
+# Daba base variables
 dsn = os.getenv('DSN')
 user = os.getenv('USER')
 password = os.getenv('PASSWORD')
 
-# Função para conectar ao banco de dados
+# Oracle DB conection function
 def db_connection():
     try:
         data_connection = f"DSN={dsn};UID={user};PWD={password}"
