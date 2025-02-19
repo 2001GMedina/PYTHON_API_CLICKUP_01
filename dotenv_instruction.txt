@@ -1,3 +1,4 @@
+#Create a .env file in the root folder with the following variables:
 DSN=YOUR_BD_DSN
 USER=YOUR_BD_USER
 PASSWORD=YOUR_BD_PASSWORD
