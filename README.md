@@ -12,7 +12,7 @@ CLICKUP_KEY=YOUR_CLICKUP_API_KEY
 
 Ensure that the credentials for both the ClickUp API and the Oracle database are correctly configured.
 
-#Usage
+#Usage:
 Run the script to collect data from the ClickUp API and insert it into the Oracle table:
 
 python main.py
