@@ -1,4 +1,4 @@
-ClickUp API to Oracle
+ClickUp API to Oracle:
 This project collects data from the ClickUp API, processes the necessary information, and inserts it into an Oracle table. It is useful for automating the ingestion of ClickUp data and integrating it into a relational database.
 
 #Configuration
