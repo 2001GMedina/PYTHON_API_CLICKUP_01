@@ -62,7 +62,6 @@ def calculate_start_date():
             start_date = today.replace(month=today.month - 1, day=29).strftime('%Y-%m-%d')
     
     return start_date
-O
 def adjust_sla_column(df):
     df['SLA_AJUSTADO'] = df['SLA'].apply(lambda x: ''.join(re.findall(r'\d+', str(x))))
     return df
