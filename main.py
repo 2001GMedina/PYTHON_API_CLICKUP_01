@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import calendar
 import re
 from datetime import datetime, timedelta
 import holidays
@@ -53,15 +54,30 @@ def add_mes_ref_column():
 # Function to calculate the start date based on the current day.
 def calculate_start_date():
     today = datetime.now()
+    
     if today.day > 29:
-        start_date = today.replace(day=29).strftime('%Y-%m-%d')
+        day = 29
     else:
-        if today.month == 1:
-            start_date = today.replace(year=today.year - 1, month=12, day=29).strftime('%Y-%m-%d')
-        else:
-            start_date = today.replace(month=today.month - 1, day=29).strftime('%Y-%m-%d')
+        day = today.day
+    
+    # Se for janeiro, o mês anterior é dezembro do ano passado
+    if today.month == 1:
+        prev_year = today.year - 1
+        prev_month = 12
+    else:
+        prev_year = today.year
+        prev_month = today.month - 1
+
+    # Verifica se o dia 29 existe no mês anterior, se não, usa o último dia do mês
+    last_day_prev_month = calendar.monthrange(prev_year, prev_month)[1]
+    
+    if day > last_day_prev_month:
+        day = last_day_prev_month  # Ajusta para o último dia disponível
+    
+    start_date = datetime(prev_year, prev_month, day).strftime('%Y-%m-%d')
     
     return start_date
+
 def adjust_sla_column(df):
     df['SLA_AJUSTADO'] = df['SLA'].apply(lambda x: ''.join(re.findall(r'\d+', str(x))))
     return df

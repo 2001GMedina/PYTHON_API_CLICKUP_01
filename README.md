@@ -1,5 +1,5 @@
 ClickUp API to Oracle:
-This project collects data from the ClickUp API, processes the necessary information, and inserts it into an Oracle table. It is useful for automating the ingestion of ClickUp data and integrating it into a relational database.
+This project retrieves data from the ClickUp API using the GET method with the requests library, processes the information using pandas, and applies insertion logic with the holidays and datetime libraries. The processed data is then inserted into an Oracle table using the pyodbc library. This project is useful for automating the ingestion of ClickUp data based on date controls and integrating it into a relational database..
 
 #Configuration
 
